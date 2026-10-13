@@ -73,11 +73,24 @@
     "registry": "https://registry.npmjs.org/"
   },
   "c8": {
+    "all": true,
+    "src": [
+      "dist"
+    ],
     "include": [
       "dist/**/*.js",
       "src/**/*.ts"
     ],
     "exclude-after-remap": true,
+    "exclude": [
+      "src/core/types.ts",
+      "src/types/config.ts"
+    ],
+    "check-coverage": true,
+    "lines": 100,
+    "statements": 100,
+    "functions": 100,
+    "branches": 100,
     "reporter": [
       "text",
       "lcov"

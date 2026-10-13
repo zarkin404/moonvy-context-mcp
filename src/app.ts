@@ -36,7 +36,11 @@ export async function startServer(config: ServerConfig) {
     if (!res.headersSent) res.status(500).json({ error: "MCP 请求处理失败。" });
   });
   return await new Promise<ReturnType<typeof app.listen>>((resolve, reject) => {
-    const listener = app.listen(config.port, config.host, () => {
+    const listener = app.listen(config.port, config.host, (error?: Error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
       console.error(`[http] http://${config.host}:${config.port}/mcp`);
       resolve(listener);
     });

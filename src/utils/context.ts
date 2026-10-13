@@ -37,7 +37,8 @@ export function createContext(
   result.html = html;
   result.css = css;
   // 只传正文结构，不把完整 HTML 文档和开发预览壳交给下游项目。
-  const markup = html.match(/<body>\n([\s\S]*)\n<\/body>/)?.[1] || html;
+  // generate 始终输出带 body 的文档；正文结构缺失时不能回退为整个文档。
+  const markup = html.match(/<body>\n([\s\S]*)\n<\/body>/)![1]!;
   const zhCN = config.promptLang === "zh-CN";
   const p = zhCN ? zh : en;
   const warnings = result.diagnostics.filter((d) => d.severity === "warning");

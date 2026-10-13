@@ -370,8 +370,8 @@ export function generate(
         layerId: l.id,
       });
     for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (!child) continue;
+      // 空子图层已在规范化阶段拒绝，不能在此静默丢弃设计信息。
+      const child = children[i]!;
       const rendered = walk(child, `${path}-${i}`, l, false, flex, depth + 1);
       if (rendered) n.children.push(rendered);
     }

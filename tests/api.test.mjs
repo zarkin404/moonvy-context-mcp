@@ -83,3 +83,105 @@ test("资源下载限制主机、大小", async () => {
   assert.equal(resourceUrl("https://moonvy.com.evil.test/a"), undefined);
   await assert.rejects(() => readBytes(new Response("123456"), 3), /大小/);
 });
+
+test("资源地址拒绝非字符串、坏 URL 和外域，允许月维根域", () => {
+  for (const value of [
+    undefined,
+    null,
+    {},
+    "broken",
+    "ftp://moonvy.com/a",
+    "https://evil.test/a",
+  ])
+    assert.equal(resourceUrl(value), undefined);
+  assert.equal(resourceUrl("https://moonvy.com/a"), "https://moonvy.com/a");
+});
+test("流式下载同时限制声明大小和实际大小，空响应拒绝读取", async () => {
+  await assert.rejects(
+    readBytes(new Response("x", { headers: { "content-length": "100" } }), 3),
+    /大小/,
+  );
+  await assert.rejects(readBytes(new Response(null)), /为空/);
+  let canceled = false;
+  const stream = new ReadableStream({
+    start(c) {
+      c.enqueue(new Uint8Array([1, 2]));
+      c.enqueue(new Uint8Array([3, 4]));
+    },
+    cancel() {
+      canceled = true;
+    },
+  });
+  await assert.rejects(readBytes(new Response(stream), 3), /大小/);
+  assert.equal(canceled, true);
+  assert.deepEqual(
+    await readBytes(new Response(new Uint8Array([1, 2, 3]))),
+    Buffer.from([1, 2, 3]),
+  );
+});
+test("下载失败不暴露响应内容，无效资源不发起请求", async () => {
+  let calls = 0;
+  const client = new MoonvyClient(config, async () => {
+    calls++;
+    return new Response("confidential", { status: 403 });
+  });
+  await assert.rejects(client.download("https://evil.test/a"), /资源地址/);
+  assert.equal(calls, 0);
+  await assert.rejects(client.download("https://fs.moonvy.com/a"), /HTTP 403/);
+  assert.equal(calls, 1);
+  const plain = await new MoonvyClient(
+    config,
+    async () => new Response(new Uint8Array([1])),
+  ).download("https://fs.moonvy.com/a");
+  assert.equal(plain.mimeType, "");
+  assert.deepEqual(plain.bytes, Buffer.from([1]));
+});
+test("设计元数据补充缺失图片，保留 Genome 原有 URL 和完整预览", async () => {
+  let calls = 0;
+  const input = structuredClone(genome);
+  const node = {
+    id: "file",
+    files: { genome: { url: "https://fs.moonvy.com/genome" } },
+    preview: { large: "https://fs.moonvy.com/large.png" },
+    meta: {
+      assets: {
+        img: "https://fs.moonvy.com/replaced.png",
+        new: { url: "https://fs.moonvy.com/new.png" },
+        bad: {},
+        unsafe: "https://evil.test/a",
+      },
+    },
+  };
+  const client = new MoonvyClient(config, async () =>
+    ++calls === 1 ? Response.json(node) : Response.json(input),
+  );
+  const result = await client.getDesign(url);
+  assert.equal(result.name, "file");
+  assert.equal(result.previewUrl, node.preview.large);
+  assert.equal(result.genome.images.img.url, genome.images.img.url);
+  assert.equal(result.genome.images.new.url, node.meta.assets.new.url);
+  assert.equal(result.genome.images.bad, undefined);
+  assert.equal(result.genome.images.unsafe, undefined);
+  const withoutImages = { pages: genome.pages };
+  let i = 0;
+  const fresh = await new MoonvyClient(config, async () =>
+    ++i === 1 ? Response.json(node) : Response.json(withoutImages),
+  ).getDesign(url);
+  assert.equal(fresh.genome.images.new.url, node.meta.assets.new.url);
+});
+test("缺失 Genome、无效返回节点和坏压缩数据产生明确错误", async () => {
+  for (const node of [
+    { id: "file" },
+    { id: "file", files: { genome: { url: "https://evil.test/a" } } },
+  ])
+    await assert.rejects(
+      new MoonvyClient(config, async () => Response.json(node)).getDesign(url),
+      /Genome/,
+    );
+  assert.throws(() => decodeGenome(Buffer.from("broken")), /Genome/);
+  assert.equal(
+    decodeGenome(Buffer.from("\uFEFF" + JSON.stringify(genome))).pages[0].id,
+    "page",
+  );
+  assert.throws(() => decodeGenome(Buffer.from('{"pages":[]}')), /Genome/);
+});

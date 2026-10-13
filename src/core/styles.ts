@@ -59,10 +59,10 @@ export function baseStyles(
       MAX: "flex-end",
       BASELINE: "baseline",
     };
-    if (main[a.mainAxisAlignItems ?? ""])
-      css["justify-content"] = main[a.mainAxisAlignItems ?? ""];
-    if (cross[a.crossAxisAlignItems ?? ""])
-      css["align-items"] = cross[a.crossAxisAlignItems ?? ""];
+    const mainAlignment = main[a.mainAxisAlignItems ?? ""],
+      crossAlignment = cross[a.crossAxisAlignItems ?? ""];
+    if (mainAlignment) css["justify-content"] = mainAlignment;
+    if (crossAlignment) css["align-items"] = crossAlignment;
     if (a.wrap === "WRAP") css["flex-wrap"] = "wrap";
     if (a.isBorderBox) css["box-sizing"] = "border-box";
     if (Array.isArray(a.padding)) css.padding = a.padding.map(pxIf).join(" ");
