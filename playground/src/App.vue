@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 const mode = ref("css");
+// 预览图由本地验收生成，按运行时 URL 加载，干净检出无需包含图片。
+const previewUrl = "/generated/preview.png";
 const standalone = new URLSearchParams(location.search).has("standalone");
 const pages = Object.entries(
   import.meta.glob("./pages/**/*.vue", { eager: true, import: "default" }),
@@ -29,12 +31,7 @@ const chosen = ref(pages[0]?.[0] || "");
     <section class="comparison">
       <div>
         <h2>设计原图</h2>
-        <img
-          src="/generated/preview.png"
-          alt="设计原图"
-          width="390"
-          height="844"
-        />
+        <img :src="previewUrl" alt="设计原图" width="390" height="844" />
       </div>
       <div>
         <h2>转换结果</h2>
