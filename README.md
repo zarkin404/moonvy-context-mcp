@@ -176,4 +176,4 @@ pnpm test:package
 
 ## 参考
 
-- 项目结构、工具边界和 playground 工作流参考 [REFINIST/lanhu-context-mcp](https://github.com/refinist/lanhu-context-mcp)（MIT）。
+项目结构、工具边界和 playground 工作流参考 [REFINIST/lanhu-context-mcp](https://github.com/refinist/lanhu-context-mcp)（MIT）。
