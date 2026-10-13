@@ -3,7 +3,7 @@ import {
   ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { readFile, realpath } from "node:fs/promises";
-import { relative, isAbsolute, basename } from "node:path";
+import { relative, isAbsolute, basename, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { packageInfo } from "./package-info.js";
 import type { ServerConfig } from "./types/config.js";
@@ -28,7 +28,7 @@ export function createMcpServer(
         rel = relative(root, path);
       if (
         rel === ".." ||
-        rel.startsWith("../") ||
+        rel.startsWith(`..${sep}`) ||
         isAbsolute(rel) ||
         !/^(context\.md|index\.html|style\.css|assets\.json|diagnostics\.json|preview\.(png|jpg|webp|gif)|preview-crop-[a-f0-9]+\.png)$/.test(
           basename(path),

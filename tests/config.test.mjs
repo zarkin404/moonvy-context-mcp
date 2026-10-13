@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtemp, writeFile, rm, realpath } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 const moduleUrl = new URL("../dist/config.js", import.meta.url).href;
 const keys = [
   "CWD",
@@ -154,7 +154,10 @@ test("外部 env 文件和工作目录解析，进程环境优先", async () => 
       const result = readConfig(env, args);
       assert.equal(result.status, 0, result.stderr);
       assert.equal(result.config.twVersion, 4);
-      assert.ok(result.config.outDir.startsWith(await realpath(dir)));
+      assert.equal(
+        await realpath(dirname(result.config.outDir)),
+        await realpath(dir),
+      );
     }
     assert.equal(
       readConfig({ CWD: dir, ENV_FILE: ".env.local", TW_VERSION: "3" }).config
