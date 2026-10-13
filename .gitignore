@@ -10,3 +10,4 @@ playground/src/assets/imgs/generated/
 playground/.codex/
 .DS_Store
 coverage/
+.husky/_/

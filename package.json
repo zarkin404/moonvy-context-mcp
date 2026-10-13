@@ -1,6 +1,6 @@
 {
   "name": "moonvy-context-mcp",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "description": "将月维设计稿转换为 HTML/CSS/Tailwind、素材、Tokens 和预览上下文",
   "bin": {
@@ -25,8 +25,10 @@
     "play:build": "pnpm --dir playground build",
     "play:clean": "node playground/scripts/clean.mjs",
     "prepack": "npm run build",
+    "prepare": "husky",
     "test:package": "node scripts/verify-package.mjs",
-    "lint": "prettier --check \"src/**/*.ts\" \"scripts/*.mjs\" \"tests/*.mjs\" \".github/**/*.yml\" README.md package.json tsconfig.json pnpm-workspace.yaml \"playground/src/*.{ts,vue,css}\" \"playground/*.{js,ts,json,html}\" playground/README.md",
+    "lint": "prettier --check \"src/**/*.ts\" \"scripts/*.mjs\" \"tests/*.mjs\" \".github/**/*.yml\" README.md package.json commitlint.config.js docs/commits.md tsconfig.json pnpm-workspace.yaml \"playground/src/*.{ts,vue,css}\" \"playground/*.{js,ts,json,html}\" playground/README.md",
+    "lint:commit": "commitlint",
     "test:coverage": "pnpm build && c8 node scripts/test-coverage.mjs"
   },
   "dependencies": {
@@ -38,11 +40,14 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
     "@types/pngjs": "^6.0.5",
     "c8": "^12.0.0",
+    "husky": "^9.1.7",
     "playwright": "1.58.2",
     "postcss": "^8.5.6",
     "prettier": "3.8.3",
