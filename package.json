@@ -1,6 +1,6 @@
 {
   "name": "moonvy-context-mcp",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "description": "将月维设计稿转换为 HTML/CSS/Tailwind、素材、Tokens 和预览上下文",
   "bin": {
@@ -25,7 +25,7 @@
     "play:build": "pnpm --dir playground build",
     "play:clean": "node playground/scripts/clean.mjs",
     "prepack": "npm run build",
-    "prepare": "husky",
+    "prepare": "husky 1>&2",
     "test:package": "node scripts/verify-package.mjs",
     "lint": "prettier --check \"src/**/*.ts\" \"scripts/*.mjs\" \"tests/*.mjs\" \".github/**/*.yml\" README.md package.json commitlint.config.js docs/commits.md tsconfig.json pnpm-workspace.yaml \"playground/src/*.{ts,vue,css}\" \"playground/*.{js,ts,json,html}\" playground/README.md",
     "lint:commit": "commitlint",
