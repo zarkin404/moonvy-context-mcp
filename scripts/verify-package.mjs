@@ -28,9 +28,7 @@ try {
   )[0];
   const paths = packed.files.map((file) => file.path);
   assert.ok(paths.includes("LICENSE"));
-  const readme = await readFile(join(root, "README.md"), "utf8");
-  assert.ok(readme.includes("Copyright (c) 2026-present, REFINIST"));
-  assert.ok(readme.includes("Permission is hereby granted, free of charge"));
+  assert.ok(paths.includes("README.md"));
   assert.ok(!paths.includes("THIRD_PARTY_NOTICES.md"));
   assert.ok(paths.includes(manifest.bin[manifest.name]));
   for (const path of paths)
@@ -56,6 +54,14 @@ try {
     "package.json",
   );
   const installed = JSON.parse(await readFile(installedManifestPath, "utf8"));
+  // 核对实际安装包完整保留文档和许可，不绑定 README 的内容布局。
+  for (const file of ["README.md", "LICENSE"]) {
+    assert.equal(
+      await readFile(join(dirname(installedManifestPath), file), "utf8"),
+      await readFile(join(root, file), "utf8"),
+      `安装包中的 ${file} 必须与仓库文件一致。`,
+    );
+  }
   const entry = join(
     staging,
     "node_modules",
@@ -130,6 +136,7 @@ try {
     packageFile: packed.filename,
     packageBytes: packed.size,
     cleanInstall: true,
+    documentationPreserved: true,
     npxEntry: true,
     mcpInitialization: true,
     toolCall: true,
@@ -145,6 +152,7 @@ try {
       version: report.version,
       files: paths.length,
       cleanInstall: true,
+      documentationPreserved: true,
       npxEntry: true,
       mcpInitialization: true,
       versionSyncWithoutRebuild: true,
