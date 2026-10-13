@@ -1,0 +1,86 @@
+{
+  "name": "moonvy-context-mcp",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "将月维设计稿转换为 HTML/CSS/Tailwind、素材、Tokens 和预览上下文",
+  "bin": {
+    "moonvy-context-mcp": "dist/run.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/run.js",
+    "test": "pnpm build && node --test tests/*.test.mjs",
+    "test:live": "pnpm build && node scripts/verify-live.mjs",
+    "play": "pnpm --dir playground dev",
+    "play:build": "pnpm --dir playground build",
+    "play:clean": "node playground/scripts/clean.mjs",
+    "prepack": "npm run build",
+    "test:package": "node scripts/verify-package.mjs",
+    "lint": "prettier --check \"src/**/*.ts\" \"scripts/*.mjs\" \"tests/*.mjs\" \".github/**/*.yml\" README.md package.json tsconfig.json pnpm-workspace.yaml \"playground/src/*.{ts,vue,css}\" \"playground/*.{js,ts,json,html}\" playground/README.md",
+    "test:coverage": "pnpm build && c8 node scripts/test-coverage.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "cleye": "^2.6.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "pngjs": "^7.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.0.0",
+    "@types/pngjs": "^6.0.5",
+    "c8": "^12.0.0",
+    "playwright": "1.58.2",
+    "postcss": "^8.5.6",
+    "prettier": "3.8.3",
+    "tailwindcss": "^3.4.19",
+    "tailwindcss4": "npm:tailwindcss@^4.1.0",
+    "typescript": "^5.8.2"
+  },
+  "author": "zarkin404",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zarkin404/moonvy-context-mcp.git"
+  },
+  "homepage": "https://github.com/zarkin404/moonvy-context-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/zarkin404/moonvy-context-mcp/issues"
+  },
+  "keywords": [
+    "moonvy",
+    "月维",
+    "mcp",
+    "design-to-code",
+    "design-context",
+    "tailwindcss"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "c8": {
+    "include": [
+      "dist/**/*.js",
+      "src/**/*.ts"
+    ],
+    "exclude-after-remap": true,
+    "reporter": [
+      "text",
+      "lcov"
+    ]
+  }
+}

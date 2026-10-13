@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+html,
+body {
+  margin: 0;
+  background: #eef1f6;
+  color: #172034;
+  font-family: system-ui, sans-serif;
+}

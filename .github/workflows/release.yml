@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 配置 Node.js 和 npm registry
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: 安装支持 OIDC 的 npm
+        run: npm install --global npm@11
+
+      - name: 安装锁定依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 校验发布标签与版本
+        id: version
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
+          if (process.env.RELEASE_TAG !== `v${version}`) {
+            throw new Error('发布标签必须与 package.json 版本一致。');
+          }
+          appendFileSync(process.env.GITHUB_OUTPUT, `dist-tag=${version.includes('-') ? 'next' : 'latest'}\n`);
+          NODE
+
+      - name: 检查格式和类型
+        run: |
+          pnpm lint
+          pnpm typecheck
+
+      - name: 运行测试和 playground 构建
+        run: |
+          pnpm test
+          pnpm play:build
+
+      - name: 验证实际发布包
+        run: pnpm test:package
+
+      - name: 发布 npm 包
+        env:
+          NPM_DIST_TAG: ${{ steps.version.outputs.dist-tag }}
+        run: npm publish --access public --tag "$NPM_DIST_TAG"
+
+      - name: 创建 GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NPM_DIST_TAG: ${{ steps.version.outputs.dist-tag }}
+        run: |
+          if [ "$NPM_DIST_TAG" = "next" ]; then
+            gh release create "$RELEASE_TAG" --verify-tag --generate-notes --prerelease
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --generate-notes
+          fi

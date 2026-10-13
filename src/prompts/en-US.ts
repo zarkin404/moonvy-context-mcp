@@ -1,0 +1,12 @@
+export const TOOL_DESCRIPTION =
+  "Read a Moonvy design and return HTML/CSS or Tailwind, asset download mappings, design tokens, implementation guidance and a preview.";
+export const URL_INPUT_DESCRIPTION =
+  "Full Moonvy design file URL: https://moonvy.com/project/<projectId>/<dirId>/<fileId>.";
+export const guide = (name: string) => `Design: ${name}
+1. Inspect the target repository, framework, styling, components, fonts and tokens before adapting the reference.
+2. Preserve geometry, colors and typography. Apply responsive behavior according to product requirements.
+3. Download or reuse the listed assets, give them meaningful names and update every reference.
+4. Load all fallback CSS supplied with Tailwind. Do not use the runtime Tailwind CDN.
+5. Review conversion diagnostics and compare approximated features with the preview. Tokens are supplementary.
+6. Implement interactions, APIs and state only from explicit requirements.
+7. Check the finished implementation against the original preview using the project's verification tools when needed.`;
