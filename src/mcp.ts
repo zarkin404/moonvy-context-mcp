@@ -9,14 +9,17 @@ import { packageInfo } from "./package-info.js";
 import type { ServerConfig } from "./types/config.js";
 import { registerGetDesignContext } from "./tools/get-design-context.js";
 import { MoonvyClient } from "./services/moonvy-api.js";
+import * as zh from "./prompts/zh-CN.js";
+import * as en from "./prompts/en-US.js";
 export function createMcpServer(
   config: ServerConfig,
   client = new MoonvyClient(config),
 ): McpServer {
-  const server = new McpServer({
-    name: packageInfo.name,
-    version: packageInfo.version,
-  });
+  const p = config.promptLang === "zh-CN" ? zh : en;
+  const server = new McpServer(
+    { name: packageInfo.name, version: packageInfo.version },
+    { instructions: config.authorization ? undefined : p.CREDENTIALS_MISSING },
+  );
   registerGetDesignContext(server, config, client);
   server.registerResource(
     "design-output",

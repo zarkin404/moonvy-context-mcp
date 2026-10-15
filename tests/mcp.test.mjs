@@ -54,6 +54,7 @@ test("真实 SDK inline 协议返回文本和图片", async () => {
       name: manifest.name,
       version: manifest.version,
     });
+    assert.equal(c.getInstructions(), undefined);
     assert.equal((await c.listTools()).tools[0].name, "get_design_context");
     const r = await c.callTool({
       name: "get_design_context",
@@ -408,4 +409,96 @@ test("单画板缺少文件预览时采用画板快照", async () => {
       },
     },
   );
+});
+
+test("缺少凭据仍可发现工具，中英文和两种交付模式均不访问上游", async () => {
+  let requests = 0;
+  const api = {
+    getDesign: async () => {
+      requests++;
+      throw new Error("不应请求上游");
+    },
+    download: async () => {
+      requests++;
+      throw new Error("不应下载素材");
+    },
+  };
+  for (const promptLang of ["zh-CN", "en-US"])
+    for (const mode of ["inline", "files"])
+      await withClient(
+        { ...config, authorization: "", promptLang, mode },
+        async (client) => {
+          const instructions = client.getInstructions();
+          assert.match(instructions, /MOONVY_CREDENTIALS_MISSING/);
+          assert.match(instructions, /MOONVY_TOKEN.*MOONVY_AUTHORIZATION/);
+          assert.match(instructions, /--env-file/);
+          assert.match(
+            instructions,
+            promptLang === "zh-CN" ? /重启/ : /restart/,
+          );
+          assert.equal(
+            (await client.listTools()).tools[0].name,
+            "get_design_context",
+          );
+          const result = await client.callTool({
+            name: "get_design_context",
+            arguments: { url },
+          });
+          assert.equal(result.isError, true);
+          assert.deepEqual(result.content, [
+            { type: "text", text: instructions },
+          ]);
+        },
+        api,
+      );
+  assert.equal(requests, 0);
+});
+
+test("缺少凭据的真实 stdio 子进程可握手、重复调用并明确提示修复方法", async () => {
+  for (const promptLang of ["zh-CN", "en-US"]) {
+    const client = new Client({
+      name: "missing-credentials-test",
+      version: "1",
+    });
+    try {
+      await client.connect(
+        new StdioClientTransport({
+          command: process.execPath,
+          args: [
+            "--import",
+            "data:text/javascript," +
+              encodeURIComponent(
+                "globalThis.fetch = () => { throw new Error('Unexpected network request'); };",
+              ),
+            fileURLToPath(new URL("../dist/run.js", import.meta.url)),
+          ],
+          env: {
+            ...process.env,
+            MOONVY_TOKEN: "",
+            MOONVY_AUTHORIZATION: "",
+            ENV_FILE: join(tmpdir(), "moonvy-no-config-file.env"),
+            STDIO: "true",
+            PROMPT_LANG: promptLang,
+          },
+          stderr: "pipe",
+        }),
+      );
+      assert.equal(client.getServerVersion().version, manifest.version);
+      assert.match(client.getInstructions(), /MOONVY_CREDENTIALS_MISSING/);
+      assert.equal(
+        (await client.listTools()).tools[0].name,
+        "get_design_context",
+      );
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const result = await client.callTool({
+          name: "get_design_context",
+          arguments: { url },
+        });
+        assert.equal(result.isError, true);
+        assert.equal(result.content[0].text, client.getInstructions());
+      }
+    } finally {
+      await client.close();
+    }
+  }
 });

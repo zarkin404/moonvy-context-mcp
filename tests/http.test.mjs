@@ -5,7 +5,7 @@ import { startServer } from "../dist/app.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { config } from "./fixtures.mjs";
+import { config, url as designUrl } from "./fixtures.mjs";
 test("真实 HTTP 初始化、工具调用、方法限制和 JSON 错误", async () => {
   const server = await startServer({ ...config, isHttpMode: true, port: 0 });
   const url = new URL(`http://127.0.0.1:${server.address().port}/mcp`);
@@ -66,6 +66,39 @@ test("HTTP 传输异常返回通用错误，已发送响应不重复写入", asy
     assert.equal(sent.status, 200);
     assert.equal(await sent.text(), "already sent");
   } finally {
+    server.closeAllConnections();
+    server.close();
+    await once(server, "close");
+  }
+});
+
+test("缺少凭据的 HTTP 服务可握手并通过工具结果返回配置指引", async () => {
+  const server = await startServer({
+    ...config,
+    authorization: "",
+    isHttpMode: true,
+    port: 0,
+  });
+  const url = new URL(`http://127.0.0.1:${server.address().port}/mcp`);
+  const client = new Client({
+    name: "http-missing-credentials-test",
+    version: "1",
+  });
+  try {
+    await client.connect(new StreamableHTTPClientTransport(url));
+    assert.match(client.getInstructions(), /MOONVY_CREDENTIALS_MISSING/);
+    assert.equal(
+      (await client.listTools()).tools[0].name,
+      "get_design_context",
+    );
+    const result = await client.callTool({
+      name: "get_design_context",
+      arguments: { url: designUrl },
+    });
+    assert.equal(result.isError, true);
+    assert.equal(result.content[0].text, client.getInstructions());
+  } finally {
+    await client.close();
     server.closeAllConnections();
     server.close();
     await once(server, "close");

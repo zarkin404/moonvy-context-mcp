@@ -1,3 +1,5 @@
+export const CREDENTIALS_MISSING =
+  "MOONVY_CREDENTIALS_MISSING：未配置月维凭据。请在 MCP 运行环境中设置 MOONVY_TOKEN 或 MOONVY_AUTHORIZATION，或通过 --env-file 指定环境文件，配置后重启 MCP。请向用户说明原因，勿猜测缺失的设计信息。";
 export const TOOL_DESCRIPTION =
   "读取月维设计稿，返回 HTML+CSS/Tailwind、图片下载映射、Design Tokens、实现指引和设计图预览。";
 export const URL_INPUT_DESCRIPTION =

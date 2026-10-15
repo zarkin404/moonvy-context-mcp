@@ -1,3 +1,5 @@
+export const CREDENTIALS_MISSING =
+  "MOONVY_CREDENTIALS_MISSING: Moonvy credentials are not configured. Set MOONVY_TOKEN or MOONVY_AUTHORIZATION in the MCP environment, or specify an environment file with --env-file, then restart the MCP server. Explain the cause to the user; do not guess missing design information.";
 export const TOOL_DESCRIPTION =
   "Read a Moonvy design and return HTML/CSS or Tailwind, asset download mappings, design tokens, implementation guidance and a preview.";
 export const URL_INPUT_DESCRIPTION =

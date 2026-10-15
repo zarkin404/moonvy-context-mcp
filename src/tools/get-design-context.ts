@@ -27,6 +27,12 @@ export function registerGetDesignContext(
       },
     },
     async ({ url, pageId }): Promise<CallToolResult> => {
+      // 缺少凭据不阻断 MCP 握手，通过工具结果向 Agent 说明配置方法。
+      if (!config.authorization)
+        return {
+          isError: true,
+          content: [{ type: "text", text: p.CREDENTIALS_MISSING }],
+        };
       try {
         const design = await client.getDesign(url);
         const selected =

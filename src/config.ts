@@ -7,7 +7,7 @@ import type { ServerConfig } from "./types/config.js";
 export function normalizeAuthorization(value: string): string {
   const token = value
     .trim()
-    .replace(/^Bearer\s+/i, "")
+    .replace(/^Bearer(?:\s+|$)/i, "")
     .trim();
   return token ? `Bearer ${token}` : "";
 }
@@ -46,10 +46,6 @@ export function getServerConfig(): ServerConfig {
   const authorization = normalizeAuthorization(
     env.MOONVY_AUTHORIZATION || env.MOONVY_TOKEN || "",
   );
-  if (!authorization)
-    throw new Error(
-      "缺少 MOONVY_TOKEN 或 MOONVY_AUTHORIZATION，请通过环境变量或 --env-file 配置。",
-    );
   const unitScale = number(f.unitScale, "UNIT_SCALE", 1);
   const twVersion = number(f.twVersion, "TW_VERSION", 3);
   const port = number(f.port, "PORT", 5200);

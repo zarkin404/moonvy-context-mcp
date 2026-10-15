@@ -168,9 +168,20 @@ test("外部 env 文件和工作目录解析，进程环境优先", async () => 
     await rm(dir, { recursive: true, force: true });
   }
 });
-test("无凭据及非法配置拒绝启动，错误明确且不回显凭据", () => {
+test("缺少凭据仍可读取配置，空白和空 Bearer 头均视为缺失", () => {
+  for (const env of [
+    { MOONVY_TOKEN: "" },
+    { MOONVY_TOKEN: "   " },
+    { MOONVY_TOKEN: "", MOONVY_AUTHORIZATION: "Bearer   " },
+    { MOONVY_TOKEN: "", MOONVY_AUTHORIZATION: "Bearer" },
+  ]) {
+    const result = readConfig(env);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.config.authorization, "");
+  }
+});
+test("非法配置拒绝启动，错误明确且不回显凭据", () => {
   for (const [env, expected] of [
-    [{ MOONVY_TOKEN: "" }, /缺少 MOONVY/],
     [{ UNIT_SCALE: "0" }, /UNIT_SCALE/],
     [{ UNIT_SCALE: "NaN" }, /UNIT_SCALE/],
     [{ TW_VERSION: "5" }, /TW_VERSION/],
@@ -198,13 +209,14 @@ test("CLI 启动失败返回非零退出码和简洁错误", () => {
         ...process.env,
         MOONVY_TOKEN: "",
         MOONVY_AUTHORIZATION: "",
+        PORT: "0",
         ENV_FILE: join(tmpdir(), "moonvy-no-config-file.env"),
       },
     },
   );
   assert.equal(result.status, 1);
   assert.equal(result.stdout, "");
-  assert.match(result.stderr, /\[moonvy-context-mcp\].*缺少 MOONVY/);
+  assert.match(result.stderr, /\[moonvy-context-mcp\].*PORT/);
 });
 
 test("CLI 对非 Error 异常返回通用错误，不泄漏异常对象", () => {
