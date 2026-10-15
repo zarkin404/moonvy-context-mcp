@@ -89,6 +89,11 @@ for (const format of ["css", "tw3", "tw4"]) {
   const target = join(publicDir, format);
   await mkdir(target, { recursive: true });
   let html = await readFile(join(output.fileDir, "index.html"), "utf8");
+  // 截图基准使用本地编译产物，避免 CDN 再次注入样式或引入网络波动。
+  html = html.replace(
+    /<script src="https:\/\/(?:cdn\.tailwindcss\.com|cdn\.jsdelivr\.net\/npm\/@tailwindcss\/browser@4)"><\/script>\n?/g,
+    "",
+  );
   let css = await readFile(join(output.fileDir, "style.css"), "utf8");
   const assets = JSON.parse(
     await readFile(join(output.fileDir, "assets.json"), "utf8"),

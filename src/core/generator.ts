@@ -404,6 +404,10 @@ export function generate(
     '<meta charset="utf-8" />',
     "<style>html,body{margin:0;padding:0}</style>",
     `<meta name="viewport" content="width=device-width, initial-scale=1" />`,
+    // CDN 只用于独立 HTML 预览，context.md 中的实现代码不包含预览壳。
+    format !== "css"
+      ? `<script src="${options.tailwindVersion === 4 ? "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4" : "https://cdn.tailwindcss.com"}"></script>`
+      : "",
     format === "css" || fallbackCSS.trim()
       ? '<link rel="stylesheet" href="style.css" />'
       : "",

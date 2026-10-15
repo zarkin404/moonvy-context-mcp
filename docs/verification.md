@@ -55,3 +55,11 @@ Vue 适配页面与 Tailwind 3 工具参考页的不同通道数为 **0**。这�
 原图与 Vue 页面（左原图、右实现）：
 
 ![原图与 Vue 对照](../.moonvy-context-mcp.local/verification/vue-comparison.png)
+
+## 独立 HTML 预览
+
+Tailwind 模式导出的 `index.html` 根据 `TW_VERSION` 加载对应 Play CDN：版本 3 使用 `https://cdn.tailwindcss.com`，版本 4 使用 `https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4`。联网后无需先编译 Tailwind 即可查看页面；图片仍需按 `assets.json` 下载到对应位置，非空的补充 `style.css` 也须保留。
+
+CDN 仅用于独立预览。交给项目集成的 `context.md` 只包含正文结构和所需补充样式，不包含 CDN 脚本；正式页面继续使用项目自己的 Tailwind 构建。普通 CSS 模式不引入 CDN。
+
+`pnpm test:live` 的截图回归会移除预览 CDN，并使用本地 Tailwind 编译结果，保持与既有基准一致。

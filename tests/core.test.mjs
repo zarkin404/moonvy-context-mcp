@@ -73,7 +73,8 @@ test("Tailwind 保留无法转换的 CSS，严格模式拒绝静默丢失", () =
     () => generate(data, { styleFormat: "tailwind", strictTailwind: true }),
     /Unconvertible/,
   );
-  assert.ok(!r.html.includes("cdn.tailwindcss"));
+  assert.match(r.html, /href="style\.css"/);
+  assert.ok(!r.context.includes("<script"));
 });
 test("单位缩放在 CSS 与 Tailwind 中保持一致，不缩放百分比", () => {
   const css = generate(genome, { styleFormat: "css", unitScale: 2 });
@@ -190,4 +191,36 @@ test("文字容器继承源排版，避免宿主默认字体撑高行盒", () =>
     r.css,
     /__text-content \{[^}]*font-family: Arial;[^}]*font-size: 16px;/s,
   );
+});
+
+test("独立 Tailwind HTML 按版本加载 CDN，CSS 模式与项目上下文不引入脚本", () => {
+  const css = generate(genome, { styleFormat: "css" });
+  assert.ok(!css.html.includes("<script"));
+  assert.match(
+    generate(genome).html,
+    /<script src="https:\/\/cdn\.tailwindcss\.com"><\/script>/,
+  );
+  for (const tailwindVersion of [3, 4])
+    for (const styleFormat of ["tailwind", "hybrid"]) {
+      const result = generate(genome, { styleFormat, tailwindVersion });
+      const cdn =
+        tailwindVersion === 4
+          ? "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"
+          : "https://cdn.tailwindcss.com";
+      const script = `<script src="${cdn}"></script>`;
+      assert.ok(result.html.includes(script));
+      assert.ok(result.html.indexOf(script) < result.html.indexOf("</head>"));
+      assert.equal((result.html.match(/<script /g) || []).length, 1);
+      assert.ok(!result.context.includes("<script"));
+      const context = createContext(
+        { id: "f", name: "x", genome },
+        {
+          ...config,
+          tailwindcss: true,
+          twVersion: tailwindVersion,
+        },
+      );
+      assert.ok(context.html.includes(script));
+      assert.ok(!context.context.includes("<script"));
+    }
 });
