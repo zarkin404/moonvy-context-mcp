@@ -20,10 +20,14 @@
 
 ### Step 1. 准备登录凭据
 
-打开 Moonvy 官网登录后，再打开浏览器的开发者工具，在 Console 中执行来获取凭据：
+打开 Moonvy 官网登录后，再打开浏览器的开发者工具，在 Console 中执行以下代码来获取凭据：
 
 ```js
-console.log(window.app?.api?.$options?.token);
+var iframe = document.createElement("iframe");
+iframe.style.display = "none";
+document.body.appendChild(iframe);
+window.cs = iframe.contentWindow.console;
+cs.log(window.app?.api?.$options?.token);
 ```
 
 在项目的本地的 `.env.local` 文件中保存月维登录凭据：
