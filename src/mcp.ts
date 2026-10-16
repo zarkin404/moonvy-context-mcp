@@ -3,7 +3,7 @@ import {
   ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { readFile, realpath } from "node:fs/promises";
-import { relative, isAbsolute, basename, sep } from "node:path";
+import { relative, isAbsolute, basename, sep, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { packageInfo } from "./package-info.js";
 import type { ServerConfig } from "./types/config.js";
@@ -29,31 +29,40 @@ export function createMcpServer(
       const root = await realpath(config.outDir),
         path = await realpath(fileURLToPath(uri)),
         rel = relative(root, path);
+      const segments = rel.split(sep);
+      const cachedAsset =
+        segments.length === 3 &&
+        /^.+-[a-f0-9]{8}$/.test(segments[0]) &&
+        segments[1] === "assets" &&
+        /\.(png|jpg|webp|gif|svg|avif|bmp|ico)$/.test(basename(path));
       if (
         rel === ".." ||
         rel.startsWith(`..${sep}`) ||
         isAbsolute(rel) ||
-        !/^(context\.md|index\.html|style\.css|assets\.json|diagnostics\.json|preview\.(png|jpg|webp|gif)|preview-crop-[a-f0-9]+\.png)$/.test(
-          basename(path),
+        !(
+          cachedAsset ||
+          /^(context\.md|index\.html|style\.css|assets\.json|diagnostics\.json|preview\.(png|jpg|webp|gif)|preview-crop-[a-f0-9]+\.png)$/.test(
+            basename(path),
+          )
         )
       )
         throw new Error("只能读取本服务输出目录中的设计产物。");
-      const bytes = await readFile(path),
-        mimeType = path.endsWith(".md")
-          ? "text/markdown"
-          : path.endsWith(".html")
-            ? "text/html"
-            : path.endsWith(".css")
-              ? "text/css"
-              : path.endsWith(".json")
-                ? "application/json"
-                : path.endsWith(".png")
-                  ? "image/png"
-                  : path.endsWith(".jpg")
-                    ? "image/jpeg"
-                    : path.endsWith(".webp")
-                      ? "image/webp"
-                      : "image/gif";
+      const bytes = await readFile(path);
+      const mimeTypes: Record<string, string> = {
+        ".md": "text/markdown",
+        ".html": "text/html",
+        ".css": "text/css",
+        ".json": "application/json",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".webp": "image/webp",
+        ".gif": "image/gif",
+        ".svg": "image/svg+xml",
+        ".avif": "image/avif",
+        ".bmp": "image/bmp",
+        ".ico": "image/x-icon",
+      };
+      const mimeType = mimeTypes[extname(path)];
       return {
         contents: [
           mimeType.startsWith("image/")

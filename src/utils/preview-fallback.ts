@@ -106,8 +106,8 @@ export async function addPreviewFallback(
             .update(bytes)
             .digest("hex")
             .slice(0, 16);
-      const path = join(outDir, "preview-assets", `${id}.png`);
-      await mkdir(join(outDir, "preview-assets"), { recursive: true });
+      const path = join(outDir, "assets", `${id}.png`);
+      await mkdir(join(outDir, "assets"), { recursive: true });
       await writeFile(path, bytes);
       genome.images ??= {};
       genome.images[id] = { type: "png", url: pathToFileURL(path).href };

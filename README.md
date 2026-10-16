@@ -7,7 +7,7 @@
 ## 特性
 
 - 支持 `HTML+CSS` 和 `HTML+Tailwind CSS 3/4`，按目标项目的样式系统选择输出。
-- 返回素材映射和下载命令，补充 Design Tokens、设计预览和实现指引。
+- 自动缓存参考图片，保留按需读取的素材清单，补充 Design Tokens、设计预览和实现指引。
 - 提供 `inline` / `files` 两种模式；大稿可落盘为 `context.md` 和预览图，通过 resource_link 读取。
 - 支持多画板选择；缺失图像或形状可用明确标注的局部预览裁切补充。
 
@@ -95,21 +95,21 @@ https://moonvy.com/project/<projectId>/<dirId>/<fileId>
 
 ## 配置
 
-| CLI                  | 环境变量           | 默认值                                   |
-| -------------------- | ------------------ | ---------------------------------------- |
-| `--cwd`              | `CWD`              | 进程工作目录                             |
-| `--env-file`         | `ENV_FILE`         | `.env.local`                             |
-| `--mode`             | `MODE`             | `inline`                                 |
-| `--out-dir`          | `OUT_DIR`          | `.moonvy-context-mcp.local`              |
-| `--tailwindcss`      | `TAILWINDCSS`      | `false`，输出 CSS                        |
-| `--tw-version`       | `TW_VERSION`       | `3`，支持 3/4                            |
-| `--skip-slices`      | `SKIP_SLICES`      | `false`；true 保留源地址，不生成下载映射 |
-| `--unit-scale`       | `UNIT_SCALE`       | `1`，缩放 CSS px 数值                    |
-| `--preview-fallback` | `PREVIEW_FALLBACK` | `true`，按需使用局部预览裁切             |
-| `--prompt-lang`      | `PROMPT_LANG`      | `zh-CN`，支持 `en-US`                    |
-| `--http-timeout`     | `HTTP_TIMEOUT`     | `30000` ms                               |
-| `--http` / `--stdio` | `STDIO`            | stdio                                    |
-| `--host` / `--port`  | `HOST` / `PORT`    | `127.0.0.1:5200`                         |
+| CLI                  | 环境变量           | 默认值                                     |
+| -------------------- | ------------------ | ------------------------------------------ |
+| `--cwd`              | `CWD`              | 进程工作目录                               |
+| `--env-file`         | `ENV_FILE`         | `.env.local`                               |
+| `--mode`             | `MODE`             | `inline`                                   |
+| `--out-dir`          | `OUT_DIR`          | `.moonvy-context-mcp.local`                |
+| `--tailwindcss`      | `TAILWINDCSS`      | `false`，输出 CSS                          |
+| `--tw-version`       | `TW_VERSION`       | `3`，支持 3/4                              |
+| `--skip-slices`      | `SKIP_SLICES`      | `false`；true 保留源地址，跳过参考图片缓存 |
+| `--unit-scale`       | `UNIT_SCALE`       | `1`，缩放 CSS px 数值                      |
+| `--preview-fallback` | `PREVIEW_FALLBACK` | `true`，按需使用局部预览裁切               |
+| `--prompt-lang`      | `PROMPT_LANG`      | `zh-CN`，支持 `en-US`                      |
+| `--http-timeout`     | `HTTP_TIMEOUT`     | `30000` ms                                 |
+| `--http` / `--stdio` | `STDIO`            | stdio                                      |
+| `--host` / `--port`  | `HOST` / `PORT`    | `127.0.0.1:5200`                           |
 
 CLI 参数优先于环境变量。布尔环境变量支持 true/false 或 1/0。Tailwind 输出示例：
 
@@ -131,7 +131,7 @@ npx -y moonvy-context-mcp --http --mode files
 
 - `inline` 直接返回上下文文本和 MCP 图片；`files` 写入上下文与预览，仅返回相应链接，适合大稿。
 - files 模式同时保存 HTML、CSS、素材清单和诊断，便于检查。客户端可通过 MCP resources/read 读取输出目录内的产物。
-- 图片映射用于下游 Agent 下载或复用素材，不会自动写入目标项目的业务资源目录。
+- 默认自动将引用图片缓存到 `.moonvy-context-mcp.local/<页面标题>-<hash>/assets/`，HTML 中的相对引用可直接用于本地预览。inline 和 files 都保存预览与参考文件；`context.md` 只给出绝对位置，不展开资源和下载命令，完整映射保存在 `assets.json`，可按需读取。`SKIP_SLICES=true` 保留源图片地址并跳过缓存。是否用于生产或替换为用户提供的高清素材，遵循目标项目的素材规范和技能约束。
 - 不同画板、格式、语言和倍率分别保存；每次调用重新获取设计数据。
 - 参考代码需要适配目标框架与样式系统，交互和接口以产品需求为准。
 - Tailwind 无法表达的属性会保留在补充 CSS 中，必须一起加载。

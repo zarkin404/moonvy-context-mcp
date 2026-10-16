@@ -224,7 +224,7 @@ test("多画板只使用所选快照，缺少快照时只返回文字", async ()
         arguments: { url, pageId: "other" },
       });
       assert.equal(selected.isError, undefined);
-      assert.deepEqual(downloads, [multi.images.snapshot.url]);
+      assert.equal(downloads[0], multi.images.snapshot.url);
       const plain = await c.callTool({
         name: "get_design_context",
         arguments: { url, pageId: "page" },
@@ -323,9 +323,14 @@ test("局部预览回退通过 MCP 返回诊断和可读取的裁切资源", asy
             result.content[0].text,
             promptLang === "zh-CN" ? /预览裁切回退/ : /Preview crop fallbacks/,
           );
-          const cropUrl = result.content[0].text.match(
-            /file:\/\/[^'\s]+preview-crop-[a-f0-9]+\.png/,
-          )?.[0];
+          const { readdir } = await import("node:fs/promises");
+          const output = (await readdir(dir)).find((name) =>
+            /^.+-[a-f0-9]{8}$/.test(name),
+          );
+          const assets = JSON.parse(
+            await readFile(join(dir, output, "assets.json"), "utf8"),
+          );
+          const cropUrl = pathToFileURL(join(dir, output, assets[0].path)).href;
           assert.ok(cropUrl);
           const resource = await c.readResource({ uri: cropUrl });
           const crop = PNG.sync.read(
@@ -361,21 +366,24 @@ test("文件交付支持各图片格式，无预览及无效预览有明确行�
   const dir = await mkdtemp(join(tmpdir(), "moonvy-files-"));
   try {
     const result = generate(genome);
-    assert.equal((await writeDesignFiles(dir, "none", result)).files.length, 5);
+    assert.equal(
+      (await writeDesignFiles(dir, "none", "页面", result)).files.length,
+      5,
+    );
     for (const [mimeType, extension] of [
       ["image/png", "png"],
       ["image/jpeg", "jpg"],
       ["image/webp", "webp"],
       ["image/gif", "gif"],
     ]) {
-      const files = await writeDesignFiles(dir, mimeType, result, {
+      const files = await writeDesignFiles(dir, mimeType, "页面", result, {
         bytes: preview,
         mimeType,
       });
       assert.equal(files.files.at(-1).name, `preview.${extension}`);
     }
     await assert.rejects(
-      writeDesignFiles(dir, "bad", result, {
+      writeDesignFiles(dir, "bad", "页面", result, {
         bytes: preview,
         mimeType: "text/html",
       }),
@@ -390,7 +398,7 @@ test("单画板缺少文件预览时采用画板快照", async () => {
   const single = structuredClone(genome);
   single.pages[0].snapshot = "snapshot";
   single.images.snapshot = { url: "https://fs.moonvy.com/snapshot.png" };
-  let downloaded;
+  const downloaded = [];
   await withClient(
     config,
     async (c) => {
@@ -399,12 +407,12 @@ test("单画板缺少文件预览时采用画板快照", async () => {
         arguments: { url },
       });
       assert.equal(result.isError, undefined);
-      assert.equal(downloaded, single.images.snapshot.url);
+      assert.equal(downloaded[0], single.images.snapshot.url);
     },
     {
       getDesign: async () => ({ id: "f", name: "x", genome: single }),
       download: async (address) => {
-        downloaded = address;
+        downloaded.push(address);
         return { bytes: preview, mimeType: "image/png" };
       },
     },

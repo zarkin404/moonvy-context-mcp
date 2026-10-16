@@ -88,7 +88,8 @@ test("上下文支持中文、英文、Tokens、远程素材模式", () => {
   const design = { id: "file", name: "测试设计", genome };
   const c = createContext(design, config);
   assert.match(c.context, /实现指引/);
-  assert.match(c.context, /curl --fail/);
+  assert.ok(!c.context.includes("curl --fail"));
+  assert.match(c.context, /assets\.json/);
   assert.match(c.context, /Design Tokens/);
   const remote = createContext(design, {
     ...config,

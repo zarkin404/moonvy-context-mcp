@@ -5,7 +5,11 @@ import type { ServerConfig } from "../types/config.js";
 import { MoonvyClient } from "../services/moonvy-api.js";
 import { addPreviewFallback } from "../utils/preview-fallback.js";
 import { createContext } from "../utils/context.js";
-import { writeDesignFiles } from "../utils/file-delivery.js";
+import {
+  getDesignOutputKey,
+  getDesignOutputDir,
+  writeDesignFiles,
+} from "../utils/file-delivery.js";
 import * as zh from "../prompts/zh-CN.js";
 import * as en from "../prompts/en-US.js";
 export function registerGetDesignContext(
@@ -61,13 +65,16 @@ export function registerGetDesignContext(
           )
         )
           throw new Error("月维预览不是受支持的图片格式。");
+        const title = selected.name?.trim() || design.name;
+        const key = getDesignOutputKey(config, design.id, selected.id);
+        const pageDir = getDesignOutputDir(config.outDir, key, title);
         const fallback =
           config.previewFallback && preview
             ? await addPreviewFallback(
                 design.genome,
                 selected.id,
                 preview,
-                config.outDir,
+                pageDir,
               )
             : undefined;
         const result = createContext(
@@ -86,23 +93,17 @@ export function registerGetDesignContext(
             fallback.diagnostics.map((d) => "- " + d.message).join("\n") +
             "\n";
         }
+        const delivered = await writeDesignFiles(
+          config.outDir,
+          key,
+          title,
+          result,
+          preview,
+          config.skipSlices
+            ? undefined
+            : (url, limit) => client.download(url, limit),
+        );
         if (config.mode === "files") {
-          const key = JSON.stringify([
-            design.id,
-            selected.id,
-            config.tailwindcss,
-            config.twVersion,
-            config.skipSlices,
-            config.unitScale,
-            config.promptLang,
-            config.previewFallback,
-          ]);
-          const delivered = await writeDesignFiles(
-            config.outDir,
-            key,
-            result,
-            preview,
-          );
           return {
             content: delivered.files
               .filter(

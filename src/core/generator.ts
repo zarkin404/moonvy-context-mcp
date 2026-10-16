@@ -127,12 +127,6 @@ function textChildren(layer: Layer, cls: string): RenderNode[] {
   }
   return [text];
 }
-function semanticAssetNames(
-  assets: Asset[],
-  nodeMap: Record<string, string>,
-): string[] {
-  return assets.map((a) => `- \`${a.path}\` ← ${a.url}`);
-}
 function contextMarkdown(
   title: string,
   html: string,
@@ -162,19 +156,13 @@ function contextMarkdown(
       css,
       "```",
     );
-  parts.push("", `## Image download mappings (${assets.length} assets)`);
-  parts.push(
-    ...(assets.length
-      ? semanticAssetNames(assets, {})
-      : ["No external image assets required."]),
-  );
   parts.push(
     "",
     "## Instructions for coding agent",
     "1. Inspect the target repository before modifying code: framework, Tailwind version, aliases, fonts, existing components and design tokens.",
     "2. Adapt the HTML into the target framework; the static reference is not a business-logic specification.",
     "3. Preserve precise sizes, typography, colors and visual hierarchy unless the target project explicitly requires responsive behavior.",
-    "4. Use/download the listed image assets into the repository with safe, meaningful names; update all image references consistently.",
+    "4. Follow the target project's asset conventions and skill constraints. Consider resolution, completeness and intended use before reusing listed images or replacing them with user-provided high-resolution assets. Update references when replacing or moving images; do not redraw subtrees covered by slices.",
     "5. If fallback CSS is provided, load it: do not silently discard unsupported visual properties.",
     "6. Implement interactions only from explicit product requirements. Do not infer API endpoints, initial values or navigation.",
     "7. Compare the result against the supplied design screenshot when available; report unsupported features and deviations.",

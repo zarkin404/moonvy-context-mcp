@@ -1,4 +1,6 @@
 import { generate } from "../core/generator.js";
+import { join } from "node:path";
+import { getDesignOutputDir, getDesignOutputKey } from "./file-delivery.js";
 import type { GenerateResult } from "../core/types.js";
 import type { ServerConfig } from "../types/config.js";
 import type { DesignData } from "../services/moonvy-api.js";
@@ -42,27 +44,30 @@ export function createContext(
   const zhCN = config.promptLang === "zh-CN";
   const p = zhCN ? zh : en;
   const warnings = result.diagnostics.filter((d) => d.severity === "warning");
-  const shellQuote = (s: string) => "'" + s.replace(/'/g, "'\\''") + "'";
-  const commands = config.skipSlices
-    ? []
-    : result.assets.map(
-        (a) =>
-          `mkdir -p ${shellQuote(a.path.slice(0, a.path.lastIndexOf("/")))} && curl --fail --location -o ${shellQuote(a.path)} ${shellQuote(a.url)}`,
-      );
+  const title = page.name?.trim() || design.name;
+  const outputDir = getDesignOutputDir(
+    config.outDir,
+    getDesignOutputKey(config, design.id, page.id),
+    title,
+  );
   result.context =
     [
-      `# ${design.name}\n${zhCN ? "画板" : "Viewport"}: ${result.viewport.width} × ${result.viewport.height}; unitScale=${config.unitScale}`,
+      `# ${title}\n${zhCN ? "画板" : "Viewport"}: ${result.viewport.width} × ${result.viewport.height}; unitScale=${config.unitScale}`,
       `## HTML${config.tailwindcss ? ` + Tailwind CSS ${config.twVersion}` : ""}\n\n\`\`\`html\n${markup}\n\`\`\``,
       ...(css.trim()
         ? [
             `## ${config.tailwindcss ? (zhCN ? "补充 CSS（必须加载）" : "Fallback CSS (required)") : "CSS"}\n\n\`\`\`css\n${css}\n\`\`\``,
           ]
         : []),
-      ...(commands.length
-        ? [
-            `## ${zhCN ? "图片下载映射" : "Asset download mappings"} (${commands.length})\n\n\`\`\`sh\n${commands.join("\n")}\n\`\`\`\n${zhCN ? "以上为 POSIX shell 命令；Windows 使用等价下载命令。素材路径可按项目规范重命名，需同步所有引用。" : "Commands target POSIX shells; use equivalent downloads on Windows. Update all references if renaming assets."}`,
-          ]
-        : []),
+      `## ${zhCN ? "本地参考文件" : "Local reference files"}\n\n${zhCN ? "预览" : "Preview"}: ${join(outputDir, "index.html")}\n${zhCN ? "素材清单（按需读取）" : "Asset manifest (read when needed)"}: ${join(outputDir, "assets.json")}\n${
+        config.skipSlices
+          ? zhCN
+            ? "已保留源图片地址，未缓存参考图片。"
+            : "Source image URLs are retained; reference images are not cached."
+          : zhCN
+            ? "引用图片由 MCP 自动缓存到产物目录，无需执行下载命令。"
+            : "Referenced images are cached automatically by MCP; no download commands are needed."
+      }`,
       `## Design Tokens\n\n\`\`\`json\n${JSON.stringify(extractDesignTokens(design.genome, page.id), null, 2)}\n\`\`\``,
       ...(warnings.length
         ? [

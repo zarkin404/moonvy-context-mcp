@@ -99,12 +99,10 @@ for (const format of ["css", "tw3", "tw4"]) {
     await readFile(join(output.fileDir, "assets.json"), "utf8"),
   );
   for (const asset of assets) {
-    const download = asset.url.startsWith("file:")
-      ? { bytes: await readFile(fileURLToPath(asset.url)) }
-      : await api.download(asset.url);
+    // 使用 MCP 已缓存的图片，验证交付完整性，不由验收脚本补下载。
     const path = join(target, asset.path);
     await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, download.bytes);
+    await copyFile(join(output.fileDir, asset.path), path);
   }
   if (format === "tw3") {
     const compiled = await postcss([

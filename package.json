@@ -1,6 +1,6 @@
 {
   "name": "moonvy-context-mcp",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "module",
   "description": "将月维设计稿转换为 HTML/CSS/Tailwind、素材、Tokens 和预览上下文",
   "bin": {

@@ -58,8 +58,14 @@ Vue 适配页面与 Tailwind 3 工具参考页的不同通道数为 **0**。这�
 
 ## 独立 HTML 预览
 
-Tailwind 模式导出的 `index.html` 根据 `TW_VERSION` 加载对应 Play CDN：版本 3 使用 `https://cdn.tailwindcss.com`，版本 4 使用 `https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4`。联网后无需先编译 Tailwind 即可查看页面；图片仍需按 `assets.json` 下载到对应位置，非空的补充 `style.css` 也须保留。
+Tailwind 模式导出的 `index.html` 根据 `TW_VERSION` 加载对应 Play CDN：版本 3 使用 `https://cdn.tailwindcss.com`，版本 4 使用 `https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4`。联网后无需先编译 Tailwind 即可查看页面；MCP 默认将引用图片缓存到对应 `assets/` 目录，非空的补充 `style.css` 也须保留。
 
 CDN 仅用于独立预览。交给项目集成的 `context.md` 只包含正文结构和所需补充样式，不包含 CDN 脚本；正式页面继续使用项目自己的 Tailwind 构建。普通 CSS 模式不引入 CDN。
 
 `pnpm test:live` 的截图回归会移除预览 CDN，并使用本地 Tailwind 编译结果，保持与既有基准一致。
+
+## 页面输出目录
+
+每个页面的产物使用 `<页面标题>-<8 位 hash>/` 目录。优先使用所选画板名称，缺失时使用设计文件名称；标题会清理文件名禁用字符，hash 继续区分画板与输出配置。同名页面不会互相覆盖。
+
+`context.md`、`index.html`、`style.css`、`assets.json`、`diagnostics.json` 和 `preview.png` 放在页面目录内；参考图片和预览裁切图统一位于该目录的 `assets/`。不再创建输出根目录下共享的 `preview-assets/`。
